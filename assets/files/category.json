@@ -1,0 +1,28 @@
+{
+  "data": [
+    {
+      "id": "c1",
+      "name": "Cà phê",
+      "imageUrl": "assets/images/categories/coffee.png",
+      "description": "Đánh thức ngày mới"
+    },
+    {
+      "id": "c2",
+      "name": "Trà sữa",
+      "imageUrl": "assets/images/categories/milk_tea.png",
+      "description": "Ngọt ngào hương vị"
+    },
+    {
+      "id": "c3",
+      "name": "Trái cây & Nước ép",
+      "imageUrl": "assets/images/categories/juice.png",
+      "description": "Tươi mát tự nhiên"
+    },
+    {
+      "id": "c4",
+      "name": "Đồ đá xay",
+      "imageUrl": "assets/images/categories/freeze.png",
+      "description": "Mát lạnh sảng khoái"
+    }
+  ]
+}

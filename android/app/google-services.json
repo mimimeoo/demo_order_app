@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1060344635392",
+    "project_id": "brewgo-f9855",
+    "storage_bucket": "brewgo-f9855.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1060344635392:android:d71efcad08104b8713b8e5",
+        "android_client_info": {
+          "package_name": "com.example.demo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCFfeewcGzF1KHL8gZBIf6_0txJ6z3yR2w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

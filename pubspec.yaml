@@ -1,0 +1,42 @@
+name: demo
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.10.4
+
+dependencies:
+  carousel_slider: ^5.1.2
+  cloud_firestore: ^6.1.3
+  curved_navigation_bar: ^1.0.6
+  firebase_auth: ^6.2.0
+  firebase_core: ^4.5.0
+  flutter:
+    sdk: flutter
+  google_fonts: ^8.0.2
+  http: ^1.6.0
+  intl: ^0.20.2
+  logger: ^2.6.2
+  provider: ^6.1.5+1
+  shared_preferences: ^2.5.4
+  lottie: ^3.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/images/products/
+    - assets/files/
+  fonts:
+    - family: GoogleSans
+      fonts:
+        - asset: assets/fonts/GoogleSans-Regular.ttf
+        - asset: assets/fonts/GoogleSans-Bold.ttf
+          weight: 700

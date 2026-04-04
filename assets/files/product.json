@@ -1,0 +1,84 @@
+{
+  "data": [
+    {
+      "id": "p1",
+      "categoryId": "c2",
+      "name": "Trà Đào Cam Sả",
+      "description": "Vị trà thanh mát kết hợp đào và sả.",
+      "price": 30000,
+      "imageUrl": "assets/images/products/tradaocamsa.jpg",
+      "rating": 4.8,
+      "isPopular": true
+    },
+    {
+      "id": "p2",
+      "categoryId": "c3",
+      "name": "Nước Ép Dưa Hấu",
+      "description": "Dưa hấu tươi mát lạnh.",
+      "price": 30000,
+      "imageUrl": "assets/images/products/duahau.jpg",
+      "rating": 4.7,
+      "isPopular": true
+    },
+    {
+      "id": "p3",
+      "categoryId": "c1",
+      "name": "Cà Phê Sữa Đá",
+      "description": "Cà phê truyền thống đậm đà.",
+      "price": 25000,
+      "imageUrl": "assets/images/products/cafesuada.jpg",
+      "rating": 4.9,
+      "isPopular": true
+    },
+    {
+      "id": "p4",
+      "categoryId": "c3",
+      "name": "Sinh Tố Dâu",
+      "description": "Dâu tây chua ngọt hòa quyện sữa béo.",
+      "price": 35000,
+      "imageUrl": "assets/images/products/sinhtodau.jpg",
+      "rating": 4.6,
+      "isPopular": false
+    },
+    {
+      "id": "p5",
+      "categoryId": "c1",
+      "name": "Bạc Xỉu",
+      "description": "Sữa nhiều cà phê ít, ngọt thơm.",
+      "price": 35000,
+      "imageUrl": "assets/images/products/bacxiu.jpg",
+      "rating": 4.8,
+      "isPopular": false
+    },
+    {
+      "id": "p6",
+      "categoryId": "c4",
+      "name": "Socola Dừa Mềm",
+      "description": "Socola đậm vị cùng dừa non mềm.",
+      "price": 45000,
+      "imageUrl": "assets/images/products/socoladuamem.jpg",
+      "rating": 4.7,
+      "isPopular": false
+    },
+    {
+      "id": "p7",
+      "categoryId": "c2",
+      "name": "Trà Vải",
+      "description": "Trà đen vị vải thơm lừng.",
+      "price": 25000,
+      "imageUrl": "assets/images/products/travai.jpg",
+      "rating": 4.5,
+      "isPopular": false
+    },
+    {
+      "id": "p8",
+      "categoryId": "c4",
+      "name": "Matcha Latte",
+      "description": "Trà xanh Nhật Bản thơm béo.",
+      "price": 35000,
+      "imageUrl": "assets/images/products/matchalatte.jpg",
+      "rating": 4.9,
+      "isPopular": false
+    }
+  ]
+}
