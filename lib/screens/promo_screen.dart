@@ -57,28 +57,27 @@ class PromoScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        automaticallyImplyLeading: false,
-        centerTitle: true, // Ép tiêu đề vào giữa
-        leading: Center(
-          // Đưa nút Back vào phần leading
+        centerTitle: true,
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
           child: GestureDetector(
             onTap: () => Navigator.pop(context),
             child: Container(
-              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.9),
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.grey.shade200),
               ),
-              child: Icon(Icons.arrow_back, color: _primaryColor, size: 20),
+              child: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
             ),
           ),
         ),
         title: const Text(
           "Mã ưu đãi",
           style: TextStyle(
-            color: Colors.orange,
+            fontFamily: 'GoogleSans',
+            color: Colors.black87,
             fontWeight: FontWeight.bold,
-            fontSize: 20,
+            fontSize: 18,
           ),
         ),
       ),
@@ -115,146 +114,171 @@ class PromoScreen extends StatelessWidget {
   }
 
   Widget _buildPromoCard(BuildContext context, PromoModel promo) {
+    final bgColor = const Color(0xFFFBFBFB); // Trùng màu nền Scaffold
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: _primaryColor.withOpacity(0.05),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: IntrinsicHeight(
-          child: Row(
-            children: [
-              // Phần bên trái (Icon/Trang trí)
-              Container(
-                width: 80,
-                color: _primaryColor.withOpacity(0.1),
-                child: Icon(
-                  Icons.confirmation_number,
-                  color: _primaryColor,
-                  size: 30,
+      child: Row(
+        children: [
+          // 1. Cạnh trái (Ticket Header - Nền cam)
+          Container(
+            width: 100,
+            height: 110,
+            decoration: BoxDecoration(
+              color: _primaryColor,
+              borderRadius: const BorderRadius.horizontal(left: Radius.circular(12)),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.local_offer_rounded, color: Colors.white, size: 28),
+                const SizedBox(height: 8),
+                Text(
+                  promo.discountValue < 1.0 
+                      ? "GIẢM ${(promo.discountValue * 100).toInt()}%" 
+                      : "GIẢM ${(promo.discountValue / 1000).toInt()}K",
+                  style: const TextStyle(fontFamily: 'GoogleSans', color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
                 ),
-              ),
-              // Nội dung Voucher
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
+              ],
+            ),
+          ),
+          
+          // 2. Vết cắt hình tròn và đường viền đứt nét mô phỏng xé vé (Cutout & Divider)
+          SizedBox(
+            height: 110,
+            width: 16,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Flex(
+                      direction: Axis.vertical,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: List.generate(10, (_) => Container(width: 1.5, height: 4, color: Colors.grey.shade300)),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: -8, left: 0, right: 0,
+                  child: Container(height: 16, decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle)),
+                ),
+                Positioned(
+                  bottom: -8, left: 0, right: 0,
+                  child: Container(height: 16, decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle)),
+                ),
+              ],
+            ),
+          ),
+          
+          // 3. Thông tin bên phải và Nút (Ticket body)
+          Expanded(
+            child: Container(
+              height: 110,
+              padding: const EdgeInsets.fromLTRB(0, 12, 12, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         promo.title,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
+                        style: const TextStyle(fontFamily: 'GoogleSans', fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black87),
+                        maxLines: 1, overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
                       Text(
                         promo.description,
-                        style: const TextStyle(color: Colors.grey, fontSize: 13),
+                        style: const TextStyle(fontFamily: 'GoogleSans', color: Colors.black54, fontSize: 12),
+                        maxLines: 2, overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        "HSD: ${promo.expiryDate}",
-                        style: const TextStyle(
-                          color: Colors.redAccent,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          "HSD: ${promo.expiryDate}",
+                          style: const TextStyle(fontFamily: 'GoogleSans', color: Colors.redAccent, fontSize: 11, fontWeight: FontWeight.w600),
+                          maxLines: 1, overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      SizedBox(
+                        height: 30,
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            final auth = context.read<AuthProvider>();
+                            final phoneNumber = auth.currentUser?.id;
+
+                            if (phoneNumber != null) {
+                              try {
+                                await FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(phoneNumber)
+                                    .collection('my_promotions')
+                                    .doc(promo.id)
+                                    .set({
+                                      'title': promo.title,
+                                      'description': promo.description,
+                                      'discountValue': promo.discountValue,
+                                      'expiryDate': promo.expiryDate,
+                                      'isUsed': false,
+                                      'savedAt': FieldValue.serverTimestamp(),
+                                    });
+
+                                if (!context.mounted) return;
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("✨ Đã thêm voucher vào ví của bạn!", style: TextStyle(fontFamily: 'GoogleSans')),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+
+                                Navigator.pop(context);
+                              } catch (e) {
+                                debugPrint("Lỗi lưu voucher: $e");
+                              }
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("Vui lòng đăng nhập để sử dụng!", style: TextStyle(fontFamily: 'GoogleSans')),
+                                ),
+                              );
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _primaryColor,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          ),
+                          child: const Text("Lưu", style: TextStyle(fontFamily: 'GoogleSans', fontSize: 12, fontWeight: FontWeight.bold)),
                         ),
                       ),
                     ],
                   ),
-                ),
+                ],
               ),
-              // Nút dùng ngay - UI Modern
-              Padding(
-                padding: const EdgeInsets.only(
-                  right: 12,
-                ), // Tăng nhẹ padding cho thoáng
-                child: SizedBox(
-                  height: 38, // Khóa chiều cao cố định cho nút cân đối
-                  width: 80, // Khóa chiều rộng để các nút đều nhau
-                  child: ElevatedButton(
-                    // Chuyển sang ElevatedButton để có hiệu ứng đổ bóng nhẹ (elevation)
-                    onPressed: () async {
-                      final auth = context.read<AuthProvider>();
-                      final phoneNumber = auth.currentUser?.id;
-
-                      if (phoneNumber != null) {
-                        try {
-                          await FirebaseFirestore.instance
-                              .collection('users')
-                              .doc(phoneNumber)
-                              .collection('my_promotions')
-                              .doc(promo.id)
-                              .set({
-                                'title': promo.title,
-                                'description': promo.description,
-                                'discountValue': promo.discountValue,
-                                'expiryDate': promo.expiryDate,
-                                'isUsed': false,
-                                'savedAt': FieldValue.serverTimestamp(),
-                              });
-
-                          // Kiểm tra context còn sống hay không sau khi await Firebase
-                          if (!context.mounted) return;
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                "✨ Đã thêm voucher vào ví của bạn!",
-                              ),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-
-                          Navigator.pop(context);
-                        } catch (e) {
-                          debugPrint("Lỗi lưu voucher: $e");
-                        }
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Vui lòng đăng nhập để sử dụng!"),
-                          ),
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _primaryColor,
-                      foregroundColor: Colors.white,
-                      elevation: 0, // Để 0 nếu bạn muốn phong cách Flat UI
-                      padding: EdgeInsets
-                          .zero, // Xóa padding mặc định để chữ nằm giữa
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                          20,
-                        ), // Bo tròn cực đại (Stadium shape)
-                      ),
-                    ),
-                    child: const Text(
-                      "Lưu",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

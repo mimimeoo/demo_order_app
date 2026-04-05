@@ -16,16 +16,25 @@ class MyVoucherScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.bgLightest,
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.9),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
+            ),
+          ),
+        ),
         title: const Text(
           "Ví Voucher của tôi",
-          style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 20),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.orange, size: 20),
-          onPressed: () => Navigator.pop(context),
+          style: TextStyle(fontFamily: 'GoogleSans', color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 18),
         ),
       ),
       body: userId == null
@@ -67,74 +76,132 @@ class MyVoucherScreen extends StatelessWidget {
   }
 
   Widget _buildVoucherCard(BuildContext context, PromoModel promo) {
+    final bgColor = AppColors.bgLightest;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: IntrinsicHeight(
-          child: Row(
-            children: [
-              Container(width: 10, color: AppColors.primaryBright), // Màu cam theo style Cart
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
+      child: Row(
+        children: [
+          // 1. Cạnh trái (Ticket Header - Nền cam)
+          Container(
+            width: 100,
+            height: 110,
+            decoration: const BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.horizontal(left: Radius.circular(12)),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.local_offer_rounded, color: Colors.white, size: 28),
+                const SizedBox(height: 8),
+                Text(
+                  promo.discountValue < 1.0 
+                      ? "GIẢM ${(promo.discountValue * 100).toInt()}%" 
+                      : "GIẢM ${(promo.discountValue / 1000).toInt()}K",
+                  style: const TextStyle(fontFamily: 'GoogleSans', color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                ),
+              ],
+            ),
+          ),
+          
+          // 2. Vết cắt hình tròn và đường viền đứt nét mô phỏng xé vé
+          SizedBox(
+            height: 110,
+            width: 16,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Flex(
+                      direction: Axis.vertical,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: List.generate(10, (_) => Container(width: 1.5, height: 4, color: Colors.grey.shade300)),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: -8, left: 0, right: 0,
+                  child: Container(height: 16, decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle)),
+                ),
+                Positioned(
+                  bottom: -8, left: 0, right: 0,
+                  child: Container(height: 16, decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle)),
+                ),
+              ],
+            ),
+          ),
+          
+          // 3. Thông tin bên phải và Nút (Ticket body)
+          Expanded(
+            child: Container(
+              height: 110,
+              padding: const EdgeInsets.fromLTRB(0, 12, 12, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              promo.title,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              promo.description,
-                              style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              "HSD: ${promo.expiryDate}",
-                              style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.w500),
-                            ),
-                          ],
-                        ),
+                      Text(
+                        promo.title,
+                        style: const TextStyle(fontFamily: 'GoogleSans', fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black87),
+                        maxLines: 1, overflow: TextOverflow.ellipsis,
                       ),
-                      // NÚT DÙNG - Gửi dữ liệu về Cart_Screen
-                      ElevatedButton(
-                        onPressed: () {
-                          // LỆNH QUAN TRỌNG: Trả đối tượng promo về màn hình trước
-                          Navigator.pop(context, promo);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryBright,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        ),
-                        child: const Text("Dùng", style: TextStyle(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 4),
+                      Text(
+                        promo.description,
+                        style: const TextStyle(fontFamily: 'GoogleSans', color: Colors.black54, fontSize: 12),
+                        maxLines: 2, overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
-                ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          "HSD: ${promo.expiryDate}",
+                          style: const TextStyle(fontFamily: 'GoogleSans', color: Colors.redAccent, fontSize: 11, fontWeight: FontWeight.w600),
+                          maxLines: 1, overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      SizedBox(
+                        height: 30,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context, promo);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          ),
+                          child: const Text("Dùng", style: TextStyle(fontFamily: 'GoogleSans', fontSize: 12, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

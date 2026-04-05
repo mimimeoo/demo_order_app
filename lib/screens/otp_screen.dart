@@ -108,128 +108,162 @@ class _OtpScreenState extends State<OtpScreen> {
     bool isComplete = _otpCtrls.every((c) => c.text.isNotEmpty);
 
     return Scaffold(
-      backgroundColor: Colors.white, // Nền trắng chuẩn Clean UI
-      appBar: AppBar(
-        backgroundColor: Colors.white, 
-        elevation: 0, 
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87), 
-          onPressed: () => Navigator.pop(context)
-        )
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Icon Message (Tạo điểm nhấn thị giác)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  shape: BoxShape.circle,
+      backgroundColor: Colors.white,
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            // 1. Phần hình ảnh Header (Giống trang Đăng nhập)
+            Stack(
+              children: [
+                Image.network(
+                  'https://plus.unsplash.com/premium_photo-1706195311880-79518d91a3e3?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+                  height: MediaQuery.of(context).size.height * 0.35,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
                 ),
-                child: const Icon(Icons.mark_email_unread_rounded, size: 36, color: AppColors.primary),
-              ),
-              const SizedBox(height: 24),
-
-              const Text("Nhập mã xác nhận", style: TextStyle(fontFamily: 'GoogleSans', fontSize: 26, fontWeight: FontWeight.bold, color: Colors.black87)),
-              const SizedBox(height: 12),
-              Text.rich(
-                TextSpan(
-                  text: "Mã OTP 6 số đã được gửi đến số điện thoại\n",
-                  style: const TextStyle(fontFamily: 'GoogleSans', fontSize: 15, color: Colors.black54, height: 1.5),
-                  children: [
-                    TextSpan(text: widget.phoneNumber, style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
-                  ]
-                )
-              ),
-              const SizedBox(height: 40),
-
-              // === 6 Ô NHẬP OTP (UI HIỆN ĐẠI) ===
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(6, (index) {
-                  return SizedBox(
-                    width: 48, height: 60,
-                    child: TextField(
-                      controller: _otpCtrls[index],
-                      focusNode: _focusNodes[index],
-                      keyboardType: TextInputType.number,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontFamily: 'GoogleSans', fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primary),
-                      inputFormatters: [LengthLimitingTextInputFormatter(1), FilteringTextInputFormatter.digitsOnly],
-                      decoration: InputDecoration(
-                        filled: true, 
-                        fillColor: AppColors.background, // Hoặc Colors.grey.shade100
-                        contentPadding: EdgeInsets.zero, // Căn giữa Text hoàn hảo
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.primary, width: 2)),
+                Positioned(
+                  top: MediaQuery.of(context).padding.top + 16,
+                  left: 16, // Đổi sang trái cho nút Back
+                  child: InkWell(
+                    onTap: () => Navigator.pop(context),
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.3),
+                        shape: BoxShape.circle,
                       ),
-                      onChanged: (value) {
-                        if (value.isNotEmpty) {
-                          if (index < 5) {
-                            _focusNodes[index + 1].requestFocus();
-                          } else {
-                            _handleVerify(); // Nhập xong ô cuối tự động verify luôn
-                          }
-                        } else {
-                          if (index > 0) _focusNodes[index - 1].requestFocus();
-                        }
-                        setState(() {}); 
-                      },
+                      child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
                     ),
-                  );
-                }),
-              ),
-              const SizedBox(height: 48),
-
-              // === NÚT XÁC NHẬN ===
-              SizedBox(
-                width: double.infinity, height: 56,
-                child: ElevatedButton(
-                  onPressed: (isComplete && !isLoading) ? _handleVerify : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary, 
-                    disabledBackgroundColor: AppColors.primary.withOpacity(0.4),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)), 
-                    elevation: 0,
                   ),
-                  child: isLoading 
-                      ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 
-                      : const Text(
-                          "XÁC NHẬN", 
-                          style: TextStyle(fontFamily: 'GoogleSans', fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 0.5)
-                        ),
                 ),
-              ),
-              const SizedBox(height: 32),
+              ],
+            ),
 
-              // === GỬI LẠI MÃ ===
-              Center(
-                child: GestureDetector(
-                  onTap: _resendOTP,
-                  child: Text.rich(
-                    TextSpan(
-                      text: "Bạn chưa nhận được mã? ",
-                      style: const TextStyle(fontFamily: 'GoogleSans', color: Colors.black54, fontSize: 14),
-                      children: [
-                        TextSpan(
-                          text: _secondsRemaining > 0 ? "Gửi lại sau ${_secondsRemaining}s" : "Gửi lại ngay",
-                          style: TextStyle(
-                            color: _secondsRemaining > 0 ? Colors.black38 : AppColors.primary, 
-                            fontWeight: FontWeight.bold
+            // 2. Phần nội dung Form (Bo góc, nổi lên trên ảnh)
+            Transform.translate(
+              offset: const Offset(0, -24),
+              child: Container(
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 32),
+                    
+                    const Text(
+                      "XÁC THỰC OTP", 
+                      style: TextStyle(
+                        fontFamily: 'GoogleSans',
+                        fontSize: 26, 
+                        fontWeight: FontWeight.w900, 
+                        letterSpacing: 1.5,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text.rich(
+                      TextSpan(
+                        text: "Mã OTP 6 số đã được gửi đến số\n",
+                        style: const TextStyle(fontFamily: 'GoogleSans', fontSize: 15, color: Colors.black54, height: 1.5),
+                        children: [
+                          TextSpan(text: widget.phoneNumber, style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
+                        ]
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 40),
+
+                    // === 6 Ô NHẬP OTP (UI ĐỒNG BỘ LOGIN) ===
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: List.generate(6, (index) {
+                        return SizedBox(
+                          width: 48, height: 56, // Kích thước cân đối với login inputs
+                          child: TextField(
+                            controller: _otpCtrls[index],
+                            focusNode: _focusNodes[index],
+                            keyboardType: TextInputType.number,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(fontFamily: 'GoogleSans', fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87),
+                            inputFormatters: [LengthLimitingTextInputFormatter(1), FilteringTextInputFormatter.digitsOnly],
+                            decoration: InputDecoration(
+                              filled: true, 
+                              fillColor: Colors.white, 
+                              contentPadding: EdgeInsets.zero, 
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300, width: 1.2)),
+                              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300, width: 1.2)),
+                              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
+                            ),
+                            onChanged: (value) {
+                              if (value.isNotEmpty) {
+                                if (index < 5) {
+                                  _focusNodes[index + 1].requestFocus();
+                                } else {
+                                  _handleVerify(); // Nhập xong ô cuối tự động verify luôn
+                                }
+                              } else {
+                                if (index > 0) _focusNodes[index - 1].requestFocus();
+                              }
+                              setState(() {}); 
+                            },
                           ),
-                        )
-                      ]
-                    )
-                  ),
+                        );
+                      }),
+                    ),
+                    const SizedBox(height: 40),
+
+                    // === NÚT XÁC NHẬN (UI ĐỒNG BỘ LOGIN) ===
+                    SizedBox(
+                      width: double.infinity, height: 52, // Đồng bộ chiều cao 52
+                      child: ElevatedButton(
+                        onPressed: (isComplete && !isLoading) ? _handleVerify : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary, 
+                          disabledBackgroundColor: Colors.grey.shade300,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), 
+                          elevation: 0,
+                        ),
+                        child: isLoading 
+                            ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 
+                            : const Text(
+                                "Xác nhận", 
+                                style: TextStyle(fontFamily: 'GoogleSans', fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+
+                    // === GỬI LẠI MÃ ===
+                    Center(
+                      child: GestureDetector(
+                        onTap: _resendOTP,
+                        child: Text.rich(
+                          TextSpan(
+                            text: "Bạn chưa nhận được mã? ",
+                            style: const TextStyle(fontFamily: 'GoogleSans', color: Colors.black54, fontSize: 14),
+                            children: [
+                              TextSpan(
+                                text: _secondsRemaining > 0 ? "Gửi lại sau ${_secondsRemaining}s" : "Gửi lại ngay",
+                                style: TextStyle(
+                                  color: _secondsRemaining > 0 ? Colors.black38 : AppColors.primary, 
+                                  fontWeight: FontWeight.bold
+                                ),
+                              )
+                            ]
+                          )
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                  ],
                 ),
-              )
-            ],
-          ),
+              ),
+            ),
+          ],
         ),
       ),
     );
