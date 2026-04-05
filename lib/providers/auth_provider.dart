@@ -6,34 +6,30 @@ import '../models/user_model.dart';
 class AuthProvider with ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  
   bool _isLoading = true;
+  String? _verificationId;
+  String? _pendingPhone;
+
+  UserModel? _currentUser;
 
   AuthProvider() {
     _checkLoginStatus();
   }
 
-  UserModel? _currentUser;
   UserModel? get currentUser => _currentUser;
   bool get isLoading => _isLoading;
   bool get isLoggedIn => _currentUser != null;
-
   bool get isAdmin => _currentUser?.role == 'admin';
-  bool get isStaff => _currentUser?.role == 'staff';
-  bool get canAccessAdminPanel => isAdmin || isStaff;
 
   void _setLoading(bool value) {
     _isLoading = value;
     notifyListeners();
   }
 
-  void setCurrentUser(UserModel user) {
-    _currentUser = user;
-    notifyListeners();
-  }
-
-  // ==========================================
+  // =======================================================
   // 0. TỰ ĐỘNG DUY TRÌ ĐĂNG NHẬP
-  // ==========================================
+  // =======================================================
   Future<void> _checkLoginStatus() async {
     User? fbUser = _auth.currentUser;
     if (fbUser != null) {
@@ -43,252 +39,177 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // ==========================================
-  // 1. ĐĂNG NHẬP BẰNG EMAIL HOẶC SỐ ĐIỆN THOẠI
-  // ==========================================
-  Future<String> login(String emailOrPhone, String password) async {
+  // =======================================================
+  // 1. GỬI MÃ OTP ĐẾN SỐ ĐIỆN THOẠI
+  // =======================================================
+  Future<void> verifyPhone(
+    String phone, 
+    VoidCallback codeSentCallback, 
+    ValueChanged<String> errorCallback
+  ) async {
+    _setLoading(true);
+    _pendingPhone = phone; 
+
+    await _auth.verifyPhoneNumber(
+      phoneNumber: phone,
+      verificationCompleted: (PhoneAuthCredential credential) async {
+        await _signInWithCredential(credential, errorCallback, (status) {});
+      },
+      verificationFailed: (FirebaseAuthException e) {
+        _setLoading(false);
+        errorCallback(e.message ?? 'Lỗi gửi mã OTP. Vui lòng kiểm tra lại số điện thoại.');
+      },
+      codeSent: (String verificationId, int? resendToken) {
+        _setLoading(false);
+        _verificationId = verificationId;
+        codeSentCallback(); 
+      },
+      codeAutoRetrievalTimeout: (String verificationId) {
+        _verificationId = verificationId;
+      },
+    );
+  }
+
+  // =======================================================
+  // 2. XÁC THỰC MÃ OTP & CHECK USER TỒN TẠI
+  // =======================================================
+  Future<void> verifyOTP(
+    String otp, 
+    ValueChanged<String> successCallback, 
+    ValueChanged<String> errorCallback
+  ) async {
+    if (_verificationId == null) {
+      errorCallback('Lỗi phiên xác thực. Vui lòng quay lại và thử lại.');
+      return;
+    }
     _setLoading(true);
     try {
-      String email = emailOrPhone.trim();
-
-      // LOGIC ĐẶC BIỆT CHO TÀI KHOẢN ADMIN TEST
-      if (email == 'brewgo@admin.com' && password == 'admin123') {
-        try {
-          UserCredential uc = await _auth.signInWithEmailAndPassword(
-            email: email,
-            password: password,
-          );
-          await _fetchAndSetUser(uc.user!.uid);
-        } on FirebaseAuthException catch (e) {
-          if (e.code == 'user-not-found' || e.code == 'invalid-credential') {
-            UserCredential uc = await _auth.createUserWithEmailAndPassword(
-              email: email,
-              password: password,
-            );
-            UserModel adminUser = UserModel(
-              id: uc.user!.uid,
-              displayName: "Admin BrewGo",
-              email: email,
-              phone: "0000000000",
-              role: "admin",
-              createdAt: DateTime.now(),
-            );
-            await _firestore
-                .collection('users')
-                .doc(adminUser.id)
-                .set(adminUser.toMap());
-            _currentUser = adminUser;
-          } else {
-            throw e;
-          }
-        }
-        _setLoading(false);
-        return 'success';
-      }
-
-      // NẾU NGƯỜI DÙNG NHẬP SỐ ĐIỆN THOẠI (Không có @)
-      if (!email.contains('@')) {
-        // Tìm email tương ứng với số điện thoại trong Database
-        final userQuery = await _firestore
-            .collection('users')
-            .where('phone', isEqualTo: email)
-            .limit(1)
-            .get();
-        if (userQuery.docs.isEmpty) {
-          _setLoading(false);
-          return 'Số điện thoại này chưa được đăng ký!';
-        }
-        email = userQuery.docs.first.get('email'); // Lấy email để đăng nhập
-      }
-
-      // THỰC HIỆN ĐĂNG NHẬP
-      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
+      PhoneAuthCredential credential = PhoneAuthProvider.credential(
+        verificationId: _verificationId!,
+        smsCode: otp,
       );
-      await _fetchAndSetUser(userCredential.user!.uid);
-
+      await _signInWithCredential(credential, errorCallback, successCallback);
+    } on FirebaseAuthException catch (_) {
       _setLoading(false);
-      return 'success';
-    } on FirebaseAuthException catch (e) {
-      _setLoading(false);
-      if (e.code == 'user-not-found' ||
-          e.code == 'wrong-password' ||
-          e.code == 'invalid-credential') {
-        return 'Tài khoản hoặc mật khẩu không đúng!';
-      }
-      return e.message ?? 'Đã xảy ra lỗi đăng nhập';
-    } catch (e) {
-      _setLoading(false);
-      return 'Lỗi hệ thống: $e';
+      errorCallback('Mã OTP không chính xác hoặc đã hết hạn.');
     }
   }
 
-  // ==========================================
-  // 2. ĐĂNG KÝ (KIỂM TRA TRÙNG EMAIL & SĐT)
-  // ==========================================
-  Future<String> register(
-    String name,
-    String email,
-    String phone,
-    String password,
+  Future<void> _signInWithCredential(
+    PhoneAuthCredential credential, 
+    ValueChanged<String> errorCallback,
+    ValueChanged<String> successCallback
   ) async {
+    try {
+      UserCredential uc = await _auth.signInWithCredential(credential);
+      final uid = uc.user!.uid;
+
+      DocumentSnapshot doc = await _firestore.collection('users').doc(uid).get();
+      
+      _setLoading(false);
+      if (doc.exists) {
+        _currentUser = UserModel.fromSnapshot(doc);
+        notifyListeners();
+        successCallback('existing_user');
+      } else {
+        successCallback('new_user'); 
+      }
+    } catch (e) {
+      _setLoading(false);
+      errorCallback('Lỗi đăng nhập: ${e.toString()}');
+    }
+  }
+  Future<String> saveNewUserInfo(String name, String gender, String email) async {
     _setLoading(true);
     try {
-      // 1. Kiểm tra xem số điện thoại đã tồn tại trong Firestore chưa
-      final phoneQuery = await _firestore
-          .collection('users')
-          .where('phone', isEqualTo: phone.trim())
-          .get();
-      if (phoneQuery.docs.isNotEmpty) {
-        _setLoading(false);
-        return 'Số điện thoại này đã được đăng ký!'; // Chặn đăng ký nếu SĐT bị trùng
-      }
+      User? fbUser = _auth.currentUser; // Lấy user từ hệ thống SMS
+      if (fbUser == null) throw Exception("Chưa xác thực số điện thoại");
 
-      // 2. Tạo tài khoản (Firebase tự động chặn nếu Email bị trùng)
-      UserCredential userCredential = await _auth
-          .createUserWithEmailAndPassword(
-            email: email.trim(),
-            password: password.trim(),
-          );
+      final uid = fbUser.uid; // Lấy đúng UID duy nhất
+      final phone = fbUser.phoneNumber ?? _pendingPhone ?? '';
 
-      // 3. Lưu thông tin vào Firestore
       UserModel newUser = UserModel(
-        id: userCredential.user!.uid,
+        id: uid, // Gán UID làm id
         displayName: name.trim(),
         email: email.trim(),
-        phone: phone.trim(),
+        phone: phone,
+        gender: gender,
         role: 'user',
         createdAt: DateTime.now(),
       );
 
-      await _firestore.collection('users').doc(newUser.id).set(newUser.toMap());
+      // LƯU VÀO FIRESTORE (Dùng `doc(uid)` thay vì `doc(phone)`)
+      await _firestore.collection('users').doc(uid).set(newUser.toMap());
       _currentUser = newUser;
-
+      
       _setLoading(false);
+      notifyListeners();
       return 'success';
-    } on FirebaseAuthException catch (e) {
-      _setLoading(false);
-      if (e.code == 'email-already-in-use') return 'Email này đã được đăng ký!';
-      if (e.code == 'weak-password')
-        return 'Mật khẩu quá yếu, vui lòng nhập ít nhất 6 ký tự!';
-      return e.message ?? 'Đã xảy ra lỗi đăng ký';
     } catch (e) {
       _setLoading(false);
       return 'Lỗi hệ thống: $e';
     }
   }
 
-  // ==========================================
-  // 3. ĐĂNG XUẤT
-  // ==========================================
+  // =======================================================
+  // 4. LẤY DỮ LIỆU USER (Dùng để auto login)
+  // =======================================================
+  Future<void> _fetchAndSetUser(String uid) async {
+    try {
+      DocumentSnapshot doc = await _firestore.collection('users').doc(uid).get();
+      if (doc.exists) {
+        _currentUser = UserModel.fromSnapshot(doc);
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint("Lỗi fetch user: $e");
+    }
+  }
+
+  // =======================================================
+  // 5. CẬP NHẬT THÔNG TIN CÁ NHÂN (UPDATE PROFILE)
+  // =======================================================
+  Future<void> updateProfile({
+    required String displayName, 
+    required String email, 
+    required String gender,
+  }) async {
+    try {
+      final String? docId = _currentUser?.id; 
+
+      if (docId == null) {
+        debugPrint("Lỗi: Không tìm thấy ID người dùng để update");
+        return;
+      }
+
+      // 1. Ghi đè dữ liệu mới lên Firebase Firestore
+      await _firestore.collection('users').doc(docId).update({
+        'displayName': displayName,
+        'e-mail': email,   
+        'gender': gender,
+      });
+
+      // 2. Cập nhật lại bản sao trong máy (Tránh việc phải tải lại app)
+      if (_currentUser != null) {
+        _currentUser = _currentUser!.copyWith(
+          displayName: displayName,
+          email: email,
+          gender: gender,
+        );
+        notifyListeners(); // Kích hoạt lệnh vẽ lại giao diện ở ProfileScreen
+      }
+    } catch (e) {
+      debugPrint("Lỗi update: $e");
+      rethrow;
+    }
+  }
+
+  // =======================================================
+  // 6. ĐĂNG XUẤT
+  // =======================================================
   Future<void> logout() async {
     await _auth.signOut();
     _currentUser = null;
     notifyListeners();
   }
-
-  // ==========================================
-  // 4. LẤY DỮ LIỆU USER TỪ FIRESTORE
-  // ==========================================
-  Future<void> _fetchAndSetUser(String uid) async {
-    try {
-      DocumentSnapshot doc = await _firestore
-          .collection('users')
-          .doc(uid)
-          .get();
-
-      if (doc.exists) {
-        // Ép kiểu từ Snapshot vào Model
-        _currentUser = UserModel.fromSnapshot(doc);
-      } else {
-        // Nếu lỡ may Auth có mà Firestore chưa có (tạo mới)
-        User? fbUser = _auth.currentUser;
-        if (fbUser != null) {
-          _currentUser = UserModel(
-            id: uid,
-            displayName: fbUser.displayName ?? "Người dùng mới",
-            email: fbUser.email ?? "",
-            phone: fbUser.phoneNumber ?? "",
-            role: 'user',
-            createdAt: DateTime.now(),
-          );
-          await _firestore
-              .collection('users')
-              .doc(uid)
-              .set(_currentUser!.toMap());
-        }
-      }
-      notifyListeners(); // Dòng này cực kỳ quan trọng để HomeScreen nhận ra thay đổi
-    } catch (e) {
-      debugPrint("Lỗi lấy dữ liệu user: $e");
-    }
-  }
-
-  Future<void> addNewAddress(
-    String userId,
-    String label,
-    String address,
-    bool isDefault,
-  ) async {
-    final addressRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(userId)
-        .collection('addresses');
-
-    // Nếu người dùng chọn đây là địa chỉ mặc định
-    if (isDefault) {
-      // Tìm các địa chỉ đang là mặc định cũ và hủy nó đi
-      final query = await addressRef.where('isDefault', isEqualTo: true).get();
-      for (var doc in query.docs) {
-        await doc.reference.update({'isDefault': false});
-      }
-    }
-
-    // Thêm địa chỉ mới
-    await addressRef.add({
-      'label': label,
-      'fullAddress': address,
-      'isDefault': isDefault,
-      'createdAt': FieldValue.serverTimestamp(), // Giúp sắp xếp địa chỉ
-    });
-  }
-
-  Future<void> updateProfile({
-  required String displayName, 
-  required String email, 
-  required String gender,
-}) async {
-  try {
-    // SỬA: Dùng chính cái ID (+84...) mà Model đã nạp lúc đăng nhập
-    final String? docId = _currentUser?.id; 
-
-    if (docId == null) {
-      debugPrint("Lỗi: Không tìm thấy ID người dùng để update");
-      return;
-    }
-
-    // 1. Ghi đè lên Firestore
-    await _firestore.collection('users').doc(docId).update({
-      'displayName': displayName,
-      'e-mail': email,   // Khớp với Key trong ảnh
-      'gender': gender,
-    });
-
-    // 2. Cập nhật "bản sao" trong máy (Local State)
-    if (_currentUser != null) {
-      _currentUser = _currentUser!.copyWith(
-        displayName: displayName,
-        email: email,
-        gender: gender,
-      );
-      
-      notifyListeners(); // Lệnh này giúp ProfileScreen tự động vẽ lại
-      debugPrint("Đã cập nhật thành công cho: $docId");
-    }
-  } catch (e) {
-    debugPrint("Lỗi update: $e");
-    rethrow;
-  }
-}
 }

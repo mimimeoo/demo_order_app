@@ -68,16 +68,16 @@ class _MenuScreenState extends State<MenuScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.white, // Đổi toàn bộ màu nền thành màu trắng
       body: FutureBuilder<Map<String, dynamic>>(
         future: loadMenuData(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator(color: AppColors.primaryBright));
+          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator(color: AppColors.primary));
 
           final categories = snapshot.data!['categories'] as List<CategoryModel>;
           final allProducts = snapshot.data!['products'] as List<ProductModel>;
 
-          // Logic lọc sản phẩm theo Category và Tìm kiếm
+          // Logic lọc sản phẩm theo Category và Tìm kiếm (Giữ nguyên)
           List<ProductModel> filteredProducts = [];
           if (_searchQuery.isNotEmpty) {
             filteredProducts = allProducts.where((p) {
@@ -92,89 +92,135 @@ class _MenuScreenState extends State<MenuScreen> {
                 : allProducts.where((p) => p.categoryId == displayCategory.id).toList();
           }
 
-          return Column(
-            children: [
-              _buildHeader(categories),
-              Expanded(
-                child: _buildProductGrid(filteredProducts),
-              ),
-            ],
+          return SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                _buildHeader(categories),
+                Expanded(
+                  child: _buildProductGrid(filteredProducts),
+                ),
+              ],
+            ),
           );
         },
       ),
     );
   }
 
-  // Header: Tiêu đề -> Tìm kiếm -> Danh mục (Bỏ hoàn toàn filter phụ)
+  // === HEADER ===
   Widget _buildHeader(List<CategoryModel> categories) {
     return Container(
-      padding: const EdgeInsets.only(top: 60, bottom: 20),
-      decoration: const BoxDecoration(
-                  color: Color.fromARGB(255, 252, 248, 245), // Màu nền nhạt bạn thích
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
-        ),
-      ),
+      color: Colors.white, // Nền phần Header cũng là màu trắng
+      padding: const EdgeInsets.only(top: 16, bottom: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Tiêu đề lớn
           const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
+            padding: EdgeInsets.symmetric(horizontal: 16),
             child: Text(
               "Thực đơn", 
-              style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: AppColors.textDark)
+              style: TextStyle(fontFamily: 'GoogleSans', fontSize: 30, fontWeight: FontWeight.bold, color: Colors.black87, letterSpacing: -0.5)
             ),
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 16),
+          
+          // === THANH TÌM KIẾM ĐỒNG BỘ 100% VỚI HOME ===
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: TextField(
-              controller: _searchController,
-              onChanged: (v) => setState(() => _searchQuery = v),
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: Colors.white,
-                hintText: "Bạn muốn uống gì hôm nay?",
-                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-                prefixIcon: const Icon(Icons.search, color: AppColors.primaryBright),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15), 
-                  borderSide: BorderSide.none
-                ),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Container(
+              height: 52,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(26), // Bo tròn thành hình viên thuốc
+                border: Border.all(color: Colors.grey.shade200, width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  const SizedBox(width: 16),
+                  Icon(
+                    Icons.search_rounded,
+                    color: Colors.grey.shade400,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: (v) => setState(() => _searchQuery = v),
+                      style: const TextStyle(fontFamily: 'GoogleSans', fontSize: 15, color: Colors.black87),
+                      decoration: InputDecoration(
+                        hintText: "Tìm kiếm đồ uống...",
+                        hintStyle: TextStyle(fontFamily: 'GoogleSans', color: Colors.grey.shade400, fontSize: 14),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 14), // Giúp text canh giữa theo chiều dọc
+                        suffixIcon: _searchQuery.isNotEmpty 
+                          ? IconButton(
+                              icon: const Icon(Icons.cancel_rounded, color: Colors.grey, size: 20),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() => _searchQuery = '');
+                                FocusScope.of(context).unfocus();
+                              },
+                            )
+                          : null,
+                      ),
+                    ),
+                  ),
+                  Container(width: 1, height: 24, color: Colors.grey.shade200), // Vạch ngăn cách
+                  IconButton(
+                    icon: const Icon(
+                      Icons.tune_rounded, // Icon bộ lọc (Filter)
+                      color: AppColors.primary,
+                      size: 22,
+                    ),
+                    onPressed: () {},
+                    splashRadius: 20,
+                  ),
+                  const SizedBox(width: 4),
+                ],
               ),
             ),
           ),
           const SizedBox(height: 20),
-          // Danh mục ngang (Category Scroller)
+          
+          // Danh mục ngang (Pill Tabs)
           SizedBox(
-            height: 42,
+            height: 38,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 15),
+              physics: const BouncingScrollPhysics(), 
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: categories.length,
               itemBuilder: (context, index) {
                 bool isSelected = _selectedCategoryIndex == index;
                 return GestureDetector(
                   onTap: () => setState(() => _selectedCategoryIndex = index),
-                  child: Container(
-                    margin: const EdgeInsets.only(right: 10),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    margin: const EdgeInsets.only(right: 12),
                     padding: const EdgeInsets.symmetric(horizontal: 22),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppColors.primaryBright.withValues(alpha: 1) : Colors.white,
-                      borderRadius: BorderRadius.circular(22),
-                      boxShadow: isSelected ? [] : [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.02),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2)
-                        )
-                      ],
+                      color: isSelected ? AppColors.primary : Colors.transparent,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isSelected ? AppColors.primary : Colors.grey.shade300,
+                        width: 1,
+                      ),
                     ),
                     alignment: Alignment.center,
                     child: Text(
                       categories[index].name,
                       style: TextStyle(
+                        fontFamily: 'GoogleSans',
                         color: isSelected ? Colors.white : Colors.black87,
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                         fontSize: 14,
@@ -190,28 +236,32 @@ class _MenuScreenState extends State<MenuScreen> {
     );
   }
 
-  // Grid hiển thị sản phẩm
+  // === GRID SẢN PHẨM ===
   Widget _buildProductGrid(List<ProductModel> products) {
     if (products.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.coffee_outlined, size: 60, color: Colors.grey.shade300),
-            const SizedBox(height: 10),
-            Text("Không tìm thấy món bạn yêu cầu", style: TextStyle(color: Colors.grey.shade400)),
+            Icon(Icons.search_off_rounded, size: 64, color: Colors.grey.shade300),
+            const SizedBox(height: 12),
+            Text(
+              "Không tìm thấy món bạn yêu cầu", 
+              style: TextStyle(fontFamily: 'GoogleSans', fontSize: 15, color: Colors.grey.shade500)
+            ),
           ],
         ),
       );
     }
 
     return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 100), // Cách dưới để không bị BottomNav đè
+      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()), 
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 120), 
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 0.75, // Điều chỉnh tỉ lệ thẻ sản phẩm cho cân đối
-        mainAxisSpacing: 18,
-        crossAxisSpacing: 18,
+        childAspectRatio: 0.72, 
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 16,
       ),
       itemCount: products.length,
       itemBuilder: (context, index) {

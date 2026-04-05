@@ -20,21 +20,21 @@ class _StoreSelectionScreenState extends State<StoreSelectionScreen> {
       "address": "123 Lê Lợi, Phường Bến Thành, Quận 1, TP. HCM",
       "distance": "0.5 km",
       "isOpen": true,
-      "imageUrl": "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=500"
+      "imageUrl": "https://plus.unsplash.com/premium_photo-1664970900025-1e3099ca757a?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
     },
     {
       "name": "BrewGo Thảo Điền",
       "address": "45 Xuân Thủy, Thảo Điền, Quận 2, TP. HCM",
       "distance": "3.2 km",
       "isOpen": true,
-      "imageUrl": "https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=500"
+      "imageUrl": "https://images.unsplash.com/photo-1667964395069-7176f3f8a23c?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
     },
     {
       "name": "BrewGo Phú Mỹ Hưng",
       "address": "SH-03 Tôn Dật Tiên, Quận 7, TP. HCM",
       "distance": "5.8 km",
       "isOpen": false,
-      "imageUrl": "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=500"
+      "imageUrl": "https://images.unsplash.com/photo-1469631423273-6995642a6a40?q=80&w=1203&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
     },
   ];
 
@@ -119,7 +119,9 @@ class _StoreSelectionScreenState extends State<StoreSelectionScreen> {
         if (isOpen) {
           setState(() => _selectedStoreIndex = index);
           // Đóng trang và trả về dữ liệu cửa hàng đã chọn
-          Future.delayed(const Duration(milliseconds: 300), () => Navigator.pop(context, store));
+          Future.delayed(const Duration(milliseconds: 300), () {
+            if (mounted) Navigator.pop(context, store);
+          });
         } else {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cửa hàng này hiện đang đóng cửa')));
         }

@@ -44,7 +44,7 @@ class _ProductCardVerticalState extends State<ProductCardVertical> with SingleTi
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Vui lòng đăng nhập để sử dụng chức năng này!'),
+        content: const Text('Vui lòng đăng nhập để sử dụng chức năng này!', style: TextStyle(fontFamily: 'GoogleSans')),
         backgroundColor: Colors.red.shade500,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
@@ -76,10 +76,11 @@ class _ProductCardVerticalState extends State<ProductCardVertical> with SingleTi
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16), 
+          border: Border.all(color: Colors.grey.shade200, width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 10,
+              color: Colors.black.withOpacity(0.06), 
+              blurRadius: 12,
               offset: const Offset(0, 4),
             ),
           ],
@@ -92,7 +93,7 @@ class _ProductCardVerticalState extends State<ProductCardVertical> with SingleTi
                 fit: StackFit.expand,
                 children: [
                   ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(14)), 
                     child: widget.product.imageUrl.startsWith('http')
                         ? Image.network(
                             widget.product.imageUrl,
@@ -104,12 +105,11 @@ class _ProductCardVerticalState extends State<ProductCardVertical> with SingleTi
                             fit: BoxFit.cover, 
                           ),
                   ),
-                  // 🔥 ĐÃ CẢI THIỆN: Nút Yêu thích dễ bấm hơn
                   Positioned(
                     top: 0,
                     right: 0,
                     child: GestureDetector(
-                      behavior: HitTestBehavior.opaque, // Giúp vùng lề xung quanh icon vẫn bắt sự kiện bấm
+                      behavior: HitTestBehavior.opaque, 
                       onTap: () {
                         if (!context.read<AuthProvider>().isLoggedIn) {
                           _requireLogin();
@@ -120,14 +120,14 @@ class _ProductCardVerticalState extends State<ProductCardVertical> with SingleTi
                         favProvider.toggleFavorite(widget.product);
                       },
                       child: Padding(
-                        padding: const EdgeInsets.all(14.0), // Tăng vùng chạm (hitbox) rộng ra
+                        padding: const EdgeInsets.all(14.0), 
                         child: ScaleTransition(
                           scale: _favController,
                           child: Container(
                             padding: const EdgeInsets.all(4),
                             child: Icon(
                               isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                              color: isFavorite ? AppColors.errorRed : Colors.white,
+                              color: isFavorite ? AppColors.error : Colors.white,
                               size: 26,
                               shadows: const [
                                 Shadow(color: Colors.black38, blurRadius: 6, offset: Offset(0, 2))
@@ -151,9 +151,10 @@ class _ProductCardVerticalState extends State<ProductCardVertical> with SingleTi
                   Text(
                     widget.product.name,
                     style: const TextStyle(
+                      fontFamily: 'GoogleSans',
                       fontWeight: FontWeight.bold, 
-                      fontSize: 18, 
-                      color: AppColors.textDark 
+                      fontSize: 16, 
+                      color: Colors.black87 
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -165,9 +166,10 @@ class _ProductCardVerticalState extends State<ProductCardVertical> with SingleTi
                       Text(
                         widget.product.formattedPrice,
                         style: const TextStyle(
+                          fontFamily: 'GoogleSans',
                           fontWeight: FontWeight.bold, 
-                          color: Colors.black, 
-                          fontSize: 16
+                          color: Colors.black87, 
+                          fontSize: 15
                         ),
                       ),
                       _buildAddButton(context),
@@ -197,7 +199,7 @@ class _ProductCardVerticalState extends State<ProductCardVertical> with SingleTi
           selectedIce: 'Đá vừa',
           selectedSweetness: '70% đường',
           selectedToppings: [],
-          itemPrice: widget.product.price.toDouble(), // Giá gốc
+          itemPrice: widget.product.price.toDouble(), 
         );
 
         context.read<CartProvider>().addItem(defaultCartItem);
@@ -205,20 +207,20 @@ class _ProductCardVerticalState extends State<ProductCardVertical> with SingleTi
         ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Đã thêm ${widget.product.name} (Size S) vào giỏ!'),
+            content: Text('Đã thêm ${widget.product.name} vào giỏ!', style: const TextStyle(fontFamily: 'GoogleSans')),
             behavior: SnackBarBehavior.floating,
             duration: const Duration(milliseconds: 700),
-            backgroundColor: AppColors.primaryBright,
+            backgroundColor: AppColors.primary,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         );
       },
       child: Container(
-        width: 32,
+        width: 32, // Tăng nhẹ kích thước lên 32
         height: 32,
         decoration: BoxDecoration(
-          color: AppColors.primaryBright, 
-          borderRadius: BorderRadius.circular(90),
+          color: AppColors.primary, 
+          shape: BoxShape.circle, // 🔥 ĐÃ SỬA: Biến thành hình tròn hoàn toàn
         ),
         child: const Icon(Icons.add_rounded, color: Colors.white, size: 22),
       ),
@@ -234,7 +236,7 @@ class ProductCardHorizontal extends StatelessWidget {
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Vui lòng đăng nhập để sử dụng chức năng này!'),
+        content: const Text('Vui lòng đăng nhập để sử dụng chức năng này!', style: TextStyle(fontFamily: 'GoogleSans')),
         backgroundColor: Colors.red.shade500,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
@@ -261,10 +263,11 @@ class ProductCardHorizontal extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade200, width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04), 
-              blurRadius: 10, 
+              color: Colors.black.withOpacity(0.06), 
+              blurRadius: 12, 
               offset: const Offset(0, 4)
             ),
           ],
@@ -275,7 +278,7 @@ class ProductCardHorizontal extends StatelessWidget {
               width: 110,
               height: double.infinity,
               child: ClipRRect(
-                borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
+                borderRadius: const BorderRadius.horizontal(left: Radius.circular(14)), 
                 child: product.imageUrl.startsWith('http')
                     ? Image.network(product.imageUrl, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.broken_image))
                     : Image.asset(product.imageUrl, fit: BoxFit.cover),
@@ -291,7 +294,7 @@ class ProductCardHorizontal extends StatelessWidget {
                   children: [
                     Text(
                       product.name, 
-                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18, color: AppColors.textDark),
+                      style: const TextStyle(fontFamily: 'GoogleSans', fontWeight: FontWeight.w700, fontSize: 16, color: Colors.black87),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -300,7 +303,7 @@ class ProductCardHorizontal extends StatelessWidget {
                       children: [
                         Text(
                           product.formattedPrice, 
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black)
+                          style: const TextStyle(fontFamily: 'GoogleSans', fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black87)
                         ),
                         GestureDetector(
                           onTap: () {
@@ -317,7 +320,7 @@ class ProductCardHorizontal extends StatelessWidget {
                               selectedIce: 'Đá vừa',
                               selectedSweetness: '70% đường',
                               selectedToppings: [],
-                              itemPrice: product.price.toDouble(), // Giá gốc
+                              itemPrice: product.price.toDouble(), 
                             );
 
                             context.read<CartProvider>().addItem(defaultCartItem);
@@ -325,20 +328,20 @@ class ProductCardHorizontal extends StatelessWidget {
                             ScaffoldMessenger.of(context).clearSnackBars();
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Đã thêm ${product.name} (Size S) vào giỏ!'),
+                                content: Text('Đã thêm ${product.name} vào giỏ!', style: const TextStyle(fontFamily: 'GoogleSans')),
                                 behavior: SnackBarBehavior.floating,
-                                duration: const Duration(milliseconds: 300),
-                                backgroundColor: AppColors.primaryBright,
+                                duration: const Duration(milliseconds: 700),
+                                backgroundColor: AppColors.primary,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                               ),
                             );
                           },
                           child: Container(
-                            width: 32,
+                            width: 32, // Tăng nhẹ kích thước lên 32
                             height: 32,
                             decoration: BoxDecoration(
-                              color: Colors.orange,
-                              borderRadius: BorderRadius.circular(8),
+                              color: AppColors.primary,
+                              shape: BoxShape.circle, // 🔥 ĐÃ SỬA: Biến thành hình tròn hoàn toàn
                             ),
                             child: const Icon(Icons.add_rounded, color: Colors.white, size: 22),
                           ),

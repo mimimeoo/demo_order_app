@@ -73,7 +73,7 @@ class PromoScreen extends StatelessWidget {
             ),
           ),
         ),
-        title: Text(
+        title: const Text(
           "Mã ưu đãi",
           style: TextStyle(
             color: Colors.orange,
@@ -87,8 +87,9 @@ class PromoScreen extends StatelessWidget {
         // Lấy từ collection chung hoặc collection riêng của user tùy logic của bạn
         stream: FirebaseFirestore.instance.collection('promotions').snapshots(),
         builder: (context, snapshot) {
-          if (snapshot.hasError)
+          if (snapshot.hasError) {
             return const Center(child: Text("Đã có lỗi xảy ra"));
+          }
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -159,7 +160,7 @@ class PromoScreen extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         promo.description,
-                        style: TextStyle(color: Colors.grey, fontSize: 13),
+                        style: const TextStyle(color: Colors.grey, fontSize: 13),
                       ),
                       const SizedBox(height: 8),
                       Text(

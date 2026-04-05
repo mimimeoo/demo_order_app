@@ -1,68 +1,72 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart'; 
 import 'package:firebase_core/firebase_core.dart';
-import 'theme/app_colors.dart'; 
-import 'package:shared_preferences/shared_preferences.dart'; 
 
 import 'firebase_options.dart'; 
+import 'theme/app_colors.dart';
+import 'theme/app_theme.dart'; 
+
 import 'providers/auth_provider.dart';
 import 'providers/favorite_provider.dart'; 
 import 'providers/cart_provider.dart'; 
 
 import 'screens/home_screen.dart'; 
-import 'screens/onboarding_screen.dart'; 
 import 'admin/admin_dashboard_screen.dart'; 
 import 'screens/login_screen.dart';
-import 'screens/register_screen.dart';
-import 'screens/setup_profile_screen.dart';
+import 'screens/user_info_screen.dart'; 
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  runApp(const AppInit());
+}
 
-  final prefs = await SharedPreferences.getInstance();
-  final bool isFirstTime = prefs.getBool('isFirstTime') ?? true;
+class AppInit extends StatelessWidget {
+  const AppInit({super.key});
 
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => FavoriteProvider()),
-        ChangeNotifierProvider(create: (_) => CartProvider()),
-      ],
-      child: MyApp(isFirstTime: isFirstTime),
-    ),
-  );
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return MaterialApp(
+            home: Scaffold(body: Center(child: Text('Lỗi Firebase:\n${snapshot.error}'))),
+          );
+        }
+        if (snapshot.connectionState == ConnectionState.done) {
+          return MultiProvider(
+            providers: [
+              ChangeNotifierProvider(create: (_) => AuthProvider()),
+              ChangeNotifierProvider(create: (_) => FavoriteProvider()),
+              ChangeNotifierProvider(create: (_) => CartProvider()),
+            ],
+            child: const MyApp(), 
+          );
+        }
+        return const MaterialApp(
+          debugShowCheckedModeBanner: false,
+          home: Scaffold(backgroundColor: AppColors.background, body: Center(child: CircularProgressIndicator(color: AppColors.primary))),
+        );
+      },
+    );
+  }
 }
 
 class MyApp extends StatelessWidget {
-  final bool isFirstTime;
-
-  const MyApp({super.key, required this.isFirstTime});
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      routes: {
-    '/login': (context) => const LoginScreen(),
-    '/register': (context) => const RegisterScreen(),
-    '/setup_profile': (context) =>  const SetupProfileScreen(phoneNumber: ''),
-    '/home': (context) => const HomeScreen(),
-  },
       title: 'BrewGo',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.orange,
-        textTheme: Theme.of(context).textTheme.apply(
-              fontFamily: 'GoogleSans',
-              bodyColor: AppColors.textDark,
-              displayColor: AppColors.textDark,
-            ),
-      ),
-      home: isFirstTime ? const OnboardingScreen() : const AuthWrapper(),
+      theme: AppTheme.lightTheme,
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        '/setup_profile': (context) => const UserInfoScreen(),
+        '/home': (context) => const HomeScreen(),
+      },
+      home: const AuthWrapper(),
     );
   }
 }
@@ -74,17 +78,14 @@ class AuthWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
 
+    // ✅ BỎ ĐOẠN CHECK isLoading Ở ĐÂY ĐỂ TRÁNH LỖI HỦY DIỆT MÀN HÌNH LOGIN KHI GỬI OTP
     
-    if (authProvider.isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator(color: AppColors.primaryBright)));
-    }
-
-    
+    // Nếu là Admin -> Vào trang quản trị
     if (authProvider.isLoggedIn && authProvider.isAdmin) {
       return const AdminDashboardScreen();
     }
 
-    
+    // ✅ Luôn luôn vào HomeScreen mặc định (Cho cả Khách chưa Login và User đã Login)
     return const HomeScreen();
   }
 }

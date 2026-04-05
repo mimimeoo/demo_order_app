@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import 'order_history_screen.dart';
 
 class OrderSuccessScreen extends StatelessWidget {
   const OrderSuccessScreen({super.key});
@@ -147,7 +148,8 @@ class OrderSuccessScreen extends StatelessWidget {
                 height: 54,
                 child: ElevatedButton(
                   onPressed: () {
-                    // TODO: Chuyển hướng sang trang theo dõi đơn hàng
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const OrderHistoryScreen()));
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryBright,

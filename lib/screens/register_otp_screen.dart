@@ -47,7 +47,7 @@ class _RegisterOtpScreenState extends State<RegisterOtpScreen> {
           ),
         );
       } catch (e) {
-        print("Lỗi lưu database: $e");
+        debugPrint("Lỗi lưu database: $e");
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Lỗi: $e'), backgroundColor: Colors.red),
@@ -181,7 +181,7 @@ class _RegisterOtpScreenState extends State<RegisterOtpScreen> {
   // Bàn phím Custom Keypad - Giữ nguyên logic từ RegisterScreen để đồng bộ
   Widget _buildCustomKeypad() {
     return Container(
-      color: AppColors.bgLight,
+      color: AppColors.background,
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
       child: GridView.count(
         shrinkWrap: true,

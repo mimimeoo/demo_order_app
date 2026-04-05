@@ -4,14 +4,15 @@ import 'package:intl/intl.dart';
 import '../theme/app_colors.dart';
 
 import '../models/product_model.dart';
-import '../models/cart_model.dart'; // 🔥 Import model giỏ hàng mới
+import '../models/cart_model.dart'; 
 import '../providers/cart_provider.dart';
 import '../providers/favorite_provider.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final ProductModel product;
+  final CartItemModel? cartItem; // Nhận dữ liệu từ giỏ hàng nếu đang chỉnh sửa
 
-  const ProductDetailScreen({super.key, required this.product});
+  const ProductDetailScreen({super.key, required this.product, this.cartItem});
 
   @override
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
@@ -33,10 +34,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   int _quantity = 1;
   final TextEditingController _noteController = TextEditingController();
 
-  final Color _primaryColor = AppColors.primaryBright; // Màu cam chủ đạo cho các phần được chọn và nút bấm
+  final Color _primaryColor = AppColors.primaryBright; 
+  final Color _bgColor = const Color(0xFFF4F4F5); // Màu nền xám nhạt (chuẩn iOS/ShopeeFood)
+
+  @override
+  void initState() {
+    super.initState();
+    // NẾU LÀ CHỈNH SỬA (Mở từ giỏ hàng), LẤY LẠI DỮ LIỆU CŨ ĐÃ CHỌN
+    if (widget.cartItem != null) {
+      _selectedSize = widget.cartItem!.selectedSize;
+      _selectedIce = widget.cartItem!.selectedIce;
+      _selectedSweetness = widget.cartItem!.selectedSweetness;
+      _selectedToppings.addAll(widget.cartItem!.selectedToppings);
+      _quantity = widget.cartItem!.quantity;
+      _noteController.text = widget.cartItem!.note.isNotEmpty ? widget.cartItem!.note : '';
+    }
+  }
 
   // === LOGIC TÍNH TIỀN ===
-  // Tính giá của 1 ly (Gốc + Size + Topping)
   double get _itemPrice {
     double basePrice = widget.product.price.toDouble();
 
@@ -50,7 +65,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return basePrice;
   }
 
-  // Tính tổng tiền = Giá 1 ly * Số lượng
   double get _totalPrice => _itemPrice * _quantity;
 
   String _formatCurrency(double amount) {
@@ -67,51 +81,34 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: _bgColor, 
+      extendBody: true, // Cho phép body cuộn xuống dưới bottom bar trong suốt
       bottomNavigationBar: _buildBottomBar(),
       body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
         slivers: [
           _buildSliverAppBar(),
           SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildProductInfo(),
-                _buildDivider(),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 16),
+                  _buildProductInfoCard(),
+                  
+                  const SizedBox(height: 16),
+                  _buildOptionsCard(), // Gom chung Kích cỡ, Độ ngọt, Mức đá vào 1 thẻ
 
-                // Dòng chọn Size
-                _buildSelectionRow(
-                  title: 'Size',
-                  options: ['Size S', 'Size M', 'Size L'],
-                  currentValue: _selectedSize,
-                  onSelected: (val) => setState(() => _selectedSize = val),
-                ),
-                _buildDivider(),
+                  const SizedBox(height: 16),
+                  _buildToppingCard(),
 
-                // Dòng chọn Độ ngọt
-                _buildSelectionRow(
-                  title: 'Độ ngọt',
-                  options: ['50%', '70%', '100%'],
-                  currentValue: _selectedSweetness,
-                  onSelected: (val) => setState(() => _selectedSweetness = val),
-                ),
-                _buildDivider(),
-
-                // Dòng chọn Đá
-                _buildSelectionRow(
-                  title: 'Mức đá',
-                  options: ['Không', 'Ít', 'Nhiều'],
-                  currentValue: _selectedIce,
-                  onSelected: (val) => setState(() => _selectedIce = val),
-                ),
-                _buildDivider(),
-
-                _buildToppingSection(),
-                _buildDivider(),
-
-                _buildNoteSection(),
-                const SizedBox(height: 24),
-              ],
+                  const SizedBox(height: 16),
+                  _buildNoteCard(),
+                  
+                  const SizedBox(height: 100), // Không gian trống cuối trang cho BottomBar lơ lửng
+                ],
+              ),
             ),
           ),
         ],
@@ -124,12 +121,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   // =======================================================
 
   Widget _buildSliverAppBar() {
-    final isFavorite = context.watch<FavoriteProvider>().isExist(
-      widget.product,
-    );
+    final isFavorite = context.watch<FavoriteProvider>().isExist(widget.product);
 
     return SliverAppBar(
-      expandedHeight: 320,
+      expandedHeight: 350, // Ảnh to, rộng rãi
       pinned: true,
       backgroundColor: Colors.white,
       elevation: 0,
@@ -138,44 +133,40 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         child: GestureDetector(
           onTap: () => Navigator.pop(context),
           child: Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.9),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.arrow_back, color: Colors.black),
+            child: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
           ),
         ),
       ),
       actions: [
         GestureDetector(
-          onTap: () =>
-              context.read<FavoriteProvider>().toggleFavorite(widget.product),
+          onTap: () => context.read<FavoriteProvider>().toggleFavorite(widget.product),
           child: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.9),
               shape: BoxShape.circle,
             ),
             child: Icon(
-              isFavorite
-                  ? Icons.favorite_rounded
-                  : Icons.favorite_border_rounded,
-              color: isFavorite ? AppColors.errorRed : Colors.black,
+              isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+              color: isFavorite ? AppColors.errorRed : Colors.black87,
+              size: 22,
             ),
           ),
         ),
         const SizedBox(width: 12),
         GestureDetector(
-          onTap: () {
-            /* Chức năng chia sẻ */
-          },
+          onTap: () { /* Chức năng chia sẻ */ },
           child: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.9),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.share_outlined, color: Colors.black),
+            child: const Icon(Icons.share_rounded, color: Colors.black87, size: 22),
           ),
         ),
         const SizedBox(width: 16),
@@ -188,104 +179,137 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget _buildProductInfo() {
-    return Padding(
+  // 1. Thẻ thông tin Header
+  Widget _buildProductInfoCard() {
+    return Container(
       padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Hàng chứa Tên sản phẩm và Bộ đếm số lượng
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: Text(
                   widget.product.name,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: const TextStyle(fontFamily: 'GoogleSans', fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87, height: 1.3),
                 ),
               ),
-
-              // --- BỘ ĐẾM SỐ LƯỢNG (Layout theo hình mẫu) ---
+              const SizedBox(width: 12),
+              
+              // --- BỘ ĐẾM SỐ LƯỢNG MỚI (Nền xám nhạt bo tròn) ---
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100, // Màu nền nhạt cho capsule
-                  borderRadius: BorderRadius.circular(25),
+                  color: const Color(0xFFF2F2F7), 
+                  borderRadius: BorderRadius.circular(30),
                 ),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    _buildQtyBtn(Icons.remove, () {
+                    _buildQtyBtn(Icons.remove_rounded, () {
                       if (_quantity > 1) setState(() => _quantity--);
-                    }),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                    }, isMinus: true),
+                    SizedBox(
+                      width: 32,
                       child: Text(
                         '$_quantity',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontFamily: 'GoogleSans', fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
                       ),
                     ),
-                    _buildQtyBtn(Icons.add, () {
+                    _buildQtyBtn(Icons.add_rounded, () {
                       setState(() => _quantity++);
-                    }, isAdd: true),
+                    }),
                   ],
                 ),
               ),
             ],
           ),
-
-          const SizedBox(height: 8),
-          const Row(
+          const SizedBox(height: 12),
+          Row(
             children: [
-              Icon(Icons.star, color: Colors.orange, size: 20),
-              SizedBox(width: 4),
-              Text("4.9/5", style: TextStyle(fontWeight: FontWeight.bold)),
+              const Icon(Icons.star_rounded, color: Colors.orange, size: 18),
+              const SizedBox(width: 4),
+              const Text("4.9/5", style: TextStyle(fontFamily: 'GoogleSans', fontWeight: FontWeight.bold, fontSize: 14)),
+              const SizedBox(width: 12),
+              Text("Đã bán 2.1k+", style: TextStyle(fontFamily: 'GoogleSans', color: Colors.black54, fontSize: 13)),
             ],
           ),
-          const SizedBox(height: 12),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Divider(height: 1, color: Color(0xFFF2F2F7), thickness: 1),
+          ),
           Text(
             widget.product.description,
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 15,
-              height: 1.5,
-            ),
+            style: const TextStyle(fontFamily: 'GoogleSans', color: Colors.black54, fontSize: 14, height: 1.5),
           ),
         ],
       ),
     );
   }
 
-  // Hàm phụ để build nút nhỏ trong bộ đếm cho gọn code
-  Widget _buildQtyBtn(IconData icon, VoidCallback onTap, {bool isAdd = false}) {
+  Widget _buildQtyBtn(IconData icon, VoidCallback onTap, {bool isMinus = false}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(6),
+        width: 28,
+        height: 28,
         decoration: BoxDecoration(
-          // Nút cộng có màu cam nổi bật theo mẫu, nút trừ màu trắng
-          color: isAdd ? Colors.orangeAccent : Colors.white,
+          color: isMinus ? Colors.white : _primaryColor,
           shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4),
-          ],
+          border: isMinus ? Border.all(color: Colors.grey.shade300, width: 1.5) : null,
+          boxShadow: isMinus ? [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 4, offset: const Offset(0, 2))] : [],
         ),
         child: Icon(
           icon,
           size: 18,
-          color: isAdd ? Colors.white : Colors.grey.shade600,
+          color: isMinus ? Colors.black54 : Colors.white,
         ),
       ),
     );
   }
 
-  // --- CẬP NHẬT SECTION CHỌN SIZE ---
+  // 2. Thẻ Tùy chọn (Gom chung Kích cỡ, Ngọt, Đá vào 1 bảng)
+  Widget _buildOptionsCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          _buildSelectionRow(
+            title: 'Size',
+            options: ['Size S', 'Size M', 'Size L'],
+            currentValue: _selectedSize,
+            onSelected: (val) => setState(() => _selectedSize = val),
+          ),
+          const Divider(height: 1, indent: 16, endIndent: 16, color: Color(0xFFF2F2F7), thickness: 1),
+          _buildSelectionRow(
+            title: 'Độ ngọt',
+            options: ['50%', '70%', '100%'],
+            currentValue: _selectedSweetness,
+            onSelected: (val) => setState(() => _selectedSweetness = val),
+          ),
+          const Divider(height: 1, indent: 16, endIndent: 16, color: Color(0xFFF2F2F7), thickness: 1),
+          _buildSelectionRow(
+            title: 'Mức đá',
+            options: ['Không', 'Ít', 'Nhiều'],
+            currentValue: _selectedIce,
+            onSelected: (val) => setState(() => _selectedIce = val),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 🔥 ĐÃ CẬP NHẬT ĐỂ HIỂN THỊ CHUNG 1 DÒNG NẰM NGANG
   Widget _buildSelectionRow({
     required String title,
     required List<String> options,
@@ -293,66 +317,48 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     required Function(String) onSelected,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       child: Row(
-        crossAxisAlignment:
-            CrossAxisAlignment.start, // Căn lề trên cho đẹp khi Wrap xuống dòng
+        crossAxisAlignment: CrossAxisAlignment.center, // Căn giữa chữ Size và các nút
         children: [
-          // Tiêu đề mục (Size, Đá, Đường...)
           SizedBox(
-            width: 80, // Độ rộng cố định để các hàng thẳng cột với nhau
-            child: Padding(
-              padding: const EdgeInsets.only(
-                top: 8,
-              ), // Căn giữa nhẹ với hàng nút
-              child: Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1A1D26),
-                ),
-              ),
+            width: 70, 
+            child: Text(
+              title,
+              style: const TextStyle(fontFamily: 'GoogleSans', fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87),
             ),
           ),
-
           const SizedBox(width: 8),
-
-          // Danh sách các nút lựa chọn
           Expanded(
-            child: Wrap(
-              spacing: 10,
-              runSpacing: 10,
+            child: Row( // Sử dụng Row và Expanded thay cho Wrap
               children: options.map((option) {
                 bool isSelected = currentValue == option;
-                return GestureDetector(
-                  onTap: () => onSelected(option),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? Colors.orange.withValues(alpha: 0.1)
-                          : Colors.white,
-                      borderRadius: BorderRadius.circular(60),
-                      border: Border.all(
-                        color: isSelected
-                            ? Colors.orange.withValues(alpha: 0.2)
-                            : Colors.grey.shade200,
-                        width: 1.5,
+                return Expanded(
+                  child: GestureDetector(
+                    onTap: () => onSelected(option),
+                    child: AnimatedContainer(
+                      margin: EdgeInsets.only(right: option == options.last ? 0 : 8), // Khoảng cách giữa 3 thẻ
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(vertical: 10), // Giữ padding dọc, loại bỏ padding ngang tĩnh
+                      alignment: Alignment.center, // Nội dung canh giữa nút
+                      decoration: BoxDecoration(
+                        color: isSelected ? _primaryColor.withOpacity(0.1) : Colors.white,
+                        borderRadius: BorderRadius.circular(40), 
+                        border: Border.all(
+                          color: isSelected ? _primaryColor.withOpacity(0.5) : Colors.grey.shade300,
+                          width: 1.2,
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      option,
-                      style: TextStyle(
-                        color: isSelected ? Colors.orange : Colors.black,
-                        fontWeight: isSelected
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                        fontSize: 16,
+                      child: Text(
+                        option,
+                        style: TextStyle(
+                          fontFamily: 'GoogleSans',
+                          color: isSelected ? _primaryColor : Colors.black87,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                          fontSize: 13,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ),
@@ -365,98 +371,76 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget _buildToppingSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionTitle('Topping'),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Row(
-            children: _toppings.entries.map((entry) {
-              bool isSelected = _selectedToppings.contains(entry.key);
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    isSelected
-                        ? _selectedToppings.remove(entry.key)
-                        : _selectedToppings.add(entry.key);
-                  });
-                },
-                child: Container(
-                  margin: const EdgeInsets.only(right: 12),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: isSelected ? _primaryColor.withValues(alpha: 0.1) : Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isSelected ? _primaryColor.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.1),
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        entry.key,
-                        style: TextStyle(
-                          color: isSelected ? _primaryColor : Colors.black,
-                          fontWeight:  isSelected ? FontWeight.bold : FontWeight.normal,
-                          fontSize: 14,
-                        ),
-                      ),
-                      Text(
-                        '+${_formatCurrency(entry.value)}',
-                        style: TextStyle(
-                          color: isSelected ? _primaryColor : Colors.black,
-                          fontWeight:  isSelected ? FontWeight.bold : FontWeight.normal,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildNoteSection() {
-    return Padding(
-      padding: const EdgeInsets.all(20),
+  // 3. Thẻ Topping 
+  Widget _buildToppingCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Ghi chú cho quán',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1A1D26),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+            child: Text(
+              "Topping",
+              style: TextStyle(fontFamily: 'GoogleSans', fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
             ),
           ),
           const SizedBox(height: 12),
-          TextField(
-            controller: _noteController,
-            maxLines: 2,
-            decoration: InputDecoration(
-              hintText: 'Ví dụ: "Ít đá, ít ngọt", "Không lấy ống hút"...',
-              hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
-              contentPadding: const EdgeInsets.all(16),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: _primaryColor),
-              ),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              children: _toppings.entries.map((entry) {
+                bool isSelected = _selectedToppings.contains(entry.key);
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      isSelected ? _selectedToppings.remove(entry.key) : _selectedToppings.add(entry.key);
+                    });
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: isSelected ? _primaryColor.withOpacity(0.1) : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isSelected ? _primaryColor.withOpacity(0.5) : Colors.grey.shade300,
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          entry.key,
+                          style: TextStyle(
+                            fontFamily: 'GoogleSans',
+                            color: isSelected ? _primaryColor : Colors.black87,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '+${_formatCurrency(entry.value)}',
+                          style: TextStyle(
+                            fontFamily: 'GoogleSans',
+                            color: isSelected ? _primaryColor : Colors.black54,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
             ),
           ),
         ],
@@ -464,111 +448,152 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget _buildBottomBar() {
+  // 4. Thẻ Ghi chú
+  Widget _buildNoteCard() {
     return Container(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        10,
-        20,
-        MediaQuery.of(context).padding.bottom + 10,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
       ),
-      child: Container(
-        height: 70,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        decoration: BoxDecoration(
-          color: Colors.grey.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(40),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 20,
-              offset: const Offset(0, 5),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Ghi chú cho quán',
+            style: TextStyle(fontFamily: 'GoogleSans', fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _noteController,
+            maxLines: 2,
+            style: const TextStyle(fontFamily: 'GoogleSans', fontSize: 15, color: Colors.black87),
+            decoration: InputDecoration(
+              hintText: 'Ví dụ: "Ít đá, ít ngọt", "Không lấy ống hút"...',
+              hintStyle: const TextStyle(fontFamily: 'GoogleSans', color: Colors.black38, fontSize: 14),
+              filled: true,
+              fillColor: const Color(0xFFF4F4F5), // Nền xám nhạt
+              contentPadding: const EdgeInsets.all(16),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _primaryColor, width: 1.2)),
             ),
-          ],
-        ),
-        child: Row(
-          children: [
-            // Hiển thị giá bên trái
-            Expanded(
-              child: Center(
-                child: Text(
-                  _formatCurrency(_totalPrice),
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-            // Nút bấm bên phải
-            ElevatedButton(
-              onPressed: () {
-                final cartItem = CartItemModel(
-                  id: DateTime.now().millisecondsSinceEpoch.toString(),
-
-                  product: widget.product,
-
-                  quantity: _quantity,
-
-                  selectedSize: _selectedSize,
-
-                  selectedIce: _selectedIce,
-
-                  selectedSweetness: _selectedSweetness,
-
-                  selectedToppings: List.from(_selectedToppings),
-
-                  note: _noteController.text,
-
-                  itemPrice: _itemPrice,
-                );
-
-                context.read<CartProvider>().addItem(cartItem);
-
-                Navigator.pop(context);
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Đã thêm ${widget.product.name} vào giỏ!'),
-                    backgroundColor: _primaryColor,
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(180, 54),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                elevation: 0,
-              ),
-              child: const Text(
-                "Add to Cart",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          color: Color(0xFF1A1D26),
-        ),
+  // === THANH BOTTOM BAR MỚI ===
+  Widget _buildBottomBar() {
+    bool isEditing = widget.cartItem != null;
+
+    return Container(
+      margin: EdgeInsets.only(
+        left: 16, 
+        right: 16, 
+        bottom: MediaQuery.of(context).padding.bottom + 16
+      ),
+      padding: const EdgeInsets.all(6), // Padding nhỏ bao quanh nút để tạo viền trắng
+      height: 68, // Cố định chiều cao
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(40), 
+        border: Border.all(color: Colors.grey.shade200, width: 1), // 🔥 Thêm viền nhẹ để đồng bộ
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.12), // 🔥 Tăng độ đậm của bóng
+            blurRadius: 25,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Hiển thị giá bên trái
+          Expanded(
+            flex: 4, // 🔥 Tinh chỉnh lại flex để nút có nhiều không gian hơn
+            child: Padding(
+              padding: const EdgeInsets.only(left: 16), 
+              child: Text(
+                _formatCurrency(_totalPrice),
+                style: const TextStyle(
+                  fontFamily: 'GoogleSans',
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87
+                ),
+              ),
+            ),
+          ),
+          
+          // Nút bấm thêm vào giỏ bên phải
+          Expanded(
+            flex: 6, // 🔥 Tinh chỉnh lại flex
+            child: SizedBox(
+              height: double.infinity, 
+              child: ElevatedButton(
+                onPressed: () {
+                  final cartProvider = context.read<CartProvider>();
+                  
+                  final cartItem = CartItemModel(
+                    id: isEditing ? widget.cartItem!.id : DateTime.now().millisecondsSinceEpoch.toString(),
+                    product: widget.product,
+                    quantity: _quantity,
+                    selectedSize: _selectedSize,
+                    selectedIce: _selectedIce,
+                    selectedSweetness: _selectedSweetness,
+                    selectedToppings: List.from(_selectedToppings),
+                    note: _noteController.text,
+                    itemPrice: _itemPrice,
+                  );
+
+                  if (isEditing) {
+                    cartProvider.removeItem(widget.cartItem!.id); 
+                    cartProvider.addItem(cartItem);               
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('Đã cập nhật giỏ hàng!', style: TextStyle(fontFamily: 'GoogleSans')),
+                        backgroundColor: _primaryColor,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    );
+                  } else {
+                    cartProvider.addItem(cartItem);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Đã thêm ${widget.product.name} vào giỏ!', style: const TextStyle(fontFamily: 'GoogleSans')),
+                        backgroundColor: _primaryColor,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    );
+                  }
+
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange, 
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 8), // 🔥 Giảm padding ngang
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30), 
+                  ),
+                  elevation: 0,
+                ),
+                // 🔥 Sử dụng FittedBox để chữ luôn nằm gọn trên 1 dòng
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    isEditing ? "Cập nhật" : "Thêm vào giỏ hàng",
+                    style: const TextStyle(fontFamily: 'GoogleSans', fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
-  }
-
-  Widget _buildDivider() {
-    return Container(height: 6, color: AppColors.bgLighter);
   }
 }

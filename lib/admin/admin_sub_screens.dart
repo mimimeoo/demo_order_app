@@ -22,7 +22,7 @@ class DashboardTab extends StatelessWidget {
     final db = FirebaseFirestore.instance;
     final users = await db.collection('users').count().get();
     final products = await db.collection('products').count().get();
-    final orders = await db.collection('orders').count().get();
+    final orders = await db.collectionGroup('orders').count().get();
     final categories = await db.collection('categories').count().get();
 
     return {
@@ -538,7 +538,7 @@ class OrdersTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('orders').orderBy('createdAt', descending: true).snapshots(),
+      stream: FirebaseFirestore.instance.collectionGroup('orders').orderBy('createdAt', descending: true).snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
         final docs = snapshot.data!.docs;
@@ -550,13 +550,13 @@ class OrdersTab extends StatelessWidget {
           itemCount: docs.length,
           itemBuilder: (context, index) {
             final data = docs[index].data() as Map<String, dynamic>;
-            final status = data['status'] ?? 'Đang xử lý';
+            final status = data['status'] ?? 'Chờ xác nhận';
 
             return Card(
               child: ExpansionTile(
                 leading: const Icon(Icons.receipt, color: _adminPrimary),
                 title: Text("Đơn hàng: #${docs[index].id.substring(0, 8)}", style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text("Tổng: ${_formatCurrency((data['total'] ?? 0).toDouble())}"),
+                subtitle: Text("Tổng: ${_formatCurrency((data['totalAmount'] ?? 0).toDouble())}"),
                 trailing: _buildStatusBadge(status),
                 children: [
                   Padding(
@@ -568,13 +568,13 @@ class OrdersTab extends StatelessWidget {
                         const SizedBox(height: 8),
                         Wrap(
                           spacing: 8,
-                          children: ['Đang xử lý', 'Đang giao', 'Hoàn thành', 'Đã hủy'].map((s) {
+                          children: ['Chờ xác nhận', 'Đang chuẩn bị', 'Đang giao hàng', 'Hoàn thành', 'Đã hủy'].map((s) {
                             return ChoiceChip(
                               label: Text(s),
                               selected: status == s,
                               selectedColor: _adminPrimary.withOpacity(0.3),
                               onSelected: (selected) {
-                                if (selected) FirebaseFirestore.instance.collection('orders').doc(docs[index].id).update({'status': s});
+                                if (selected) docs[index].reference.update({'status': s});
                               },
                             );
                           }).toList(),
@@ -593,7 +593,8 @@ class OrdersTab extends StatelessWidget {
 
   Widget _buildStatusBadge(String status) {
     Color color = Colors.orange;
-    if (status == 'Đang giao') color = Colors.blue;
+    if (status == 'Đang chuẩn bị') color = Colors.blue;
+    if (status == 'Đang giao hàng') color = Colors.purple;
     if (status == 'Hoàn thành') color = Colors.green;
     if (status == 'Đã hủy') color = Colors.red;
 

@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../theme/app_colors.dart';
 import '../widgets/carousel_slider.dart';
-// Đã xóa import product_card.dart thừa
 import '../widgets/category_list.dart';
 import '../widgets/home_header.dart';
 import '../widgets/home_section.dart';
@@ -24,7 +23,6 @@ import 'cart_screen.dart';
 import 'address_screen.dart';
 import 'store_selection_screen.dart';
 
-// HÀM HỖ TRỢ CHUYỂN TIẾNG VIỆT CÓ DẤU THÀNH KHÔNG DẤU
 String removeVietnameseTones(String str) {
   str = str.replaceAll(RegExp(r'[àáạảãâầấậẩẫăằắặẳẵ]'), 'a');
   str = str.replaceAll(RegExp(r'[èéẹẻẽêềếệểễ]'), 'e');
@@ -57,9 +55,8 @@ class _HomeScreenState extends State<HomeScreen> {
   CategoryModel? selectedCategory;
   late Future<Map<String, dynamic>> _appDataFuture;
 
-  // Định nghĩa các hằng số giao diện
-  final Color kPrimaryColor = AppColors.primaryBright;
-  final double kHorizontalPadding = 16.0;
+  final Color kPrimaryColor = AppColors.primary;
+  final double kHorizontalPadding = 16.0; // Margin mặc định toàn trang
 
   @override
   void initState() {
@@ -74,7 +71,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<Map<String, dynamic>> loadAppData() async {
-    // Đã xóa biến phone thừa theo yêu cầu để dọn dẹp bộ nhớ
     try {
       final db = FirebaseFirestore.instance;
       final categorySnapshot = await db.collection('categories').get();
@@ -93,33 +89,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   final List<Map<String, String>> sampleEvents = [
-    {
-      "title": "BrewGo xin chào Đồng Chill Vincom Times City",
-      "image": "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=500"
-    },
-    {
-      "title": "BrewGo xin chào Đồng Chill Vincom Times City",
-      "image": "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=500"
-    },
-    {
-      "title": "BrewGo xin chào Đồng Chill Vincom Times City",
-      "image": "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=500"
-    },
+    {"title": "BrewGo xin chào Đồng Chill Vincom Times City", "image": "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=500"},
+    {"title": "BrewGo xin chào Đồng Chill Vincom Times City", "image": "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=500"},
   ];
 
   final List<Map<String, String>> sampleNews = [
-    {
-      "title": "PHAN XI PĂNG LONG NHÃN - Vị trà núi rừng",
-      "image": "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=500"
-    },
-    {
-      "title": "PHAN XI PĂNG LONG NHÃN - Vị trà núi rừng",
-      "image": "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=500"
-    },
-    {
-      "title": "PHAN XI PĂNG LONG NHÃN - Vị trà núi rừng",
-      "image": "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=500"
-    },
+    {"title": "PHAN XI PĂNG LONG NHÃN - Vị trà núi rừng", "image": "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=500"},
+    {"title": "PHAN XI PĂNG LONG NHÃN - Vị trà núi rừng", "image": "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=500"},
   ];
 
   @override
@@ -128,6 +104,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final auth = context.watch<AuthProvider>();
     final currentUser = auth.currentUser;
     Widget currentScreen;
+    
     switch (_selectedIndex) {
       case 0:
         currentScreen = _buildHomeContent(currentUser);
@@ -147,19 +124,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      resizeToAvoidBottomInset: false, // Tránh lỗi layout khi hiện phím
+      resizeToAvoidBottomInset: false, 
       extendBody: true,
-      floatingActionButton: cartItemCount > 0
-          ? _buildFloatingCart(cartItemCount)
-          : null,
+      floatingActionButton: cartItemCount > 0 ? _buildFloatingCart(cartItemCount) : null,
       bottomNavigationBar: CustomBottomNavBar(
         selectedIndex: _selectedIndex,
         onItemTapped: (index) => setState(() => _selectedIndex = index),
       ),
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
-        child: currentScreen,
-      ),
+      body: AnimatedSwitcher(duration: const Duration(milliseconds: 300), child: currentScreen),
     );
   }
 
@@ -174,7 +146,6 @@ class _HomeScreenState extends State<HomeScreen> {
         final categories = snapshot.data!['categories'] as List<CategoryModel>;
         final allProducts = snapshot.data!['products'] as List<ProductModel>;
 
-        // Logic lọc sản phẩm
         bool isSearching = _searchQuery.isNotEmpty;
         List<ProductModel> searchResults = isSearching
             ? allProducts.where((p) => removeVietnameseTones(p.name).contains(removeVietnameseTones(_searchQuery))).toList()
@@ -193,11 +164,10 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Header & Carousel Section
               Container(
                 width: double.infinity,
                 decoration: const BoxDecoration(
-                  color: Color.fromARGB(255, 252, 248, 245), // Màu nền nhạt bạn thích
+                  color: Color.fromARGB(255, 252, 248, 245),
                   borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
                 ),
                 child: SafeArea(
@@ -218,56 +188,34 @@ class _HomeScreenState extends State<HomeScreen> {
                         CustomCarouselSlider(),
                         const SizedBox(height: 16),
                         _buildDeliveryInfo(context),
-                        const SizedBox(height: 20), // Khoảng cách kết thúc phần header cong
+                        const SizedBox(height: 16), // Sửa thành 16
                       ],
                     ],
                   ),
                 ),
               ),
 
-              // 2. Main Content
               if (isSearching)
                 Padding(
                   padding: const EdgeInsets.only(top: 16),
                   child: ProductSection(title: "Kết quả tìm kiếm", products: searchResults),
                 )
               else ...[
-                // --- DANH MỤC ---
-                const SizedBox(height: 12),
-                CategoryList(
-                  categories: categories,
-                  onCategorySelected: (category) => setState(() => selectedCategory = category),
-                ),
-
-                // --- BÁN CHẠY (Section 1) ---
-                const SizedBox(height: 24), 
-                ProductSection(
-                  title: "Bán chạy nhất",
-                  products: bestSellers,
-                  isHorizontal: true,
-                ),
-
-                // --- MÓN NGON PHẢI THỬ (Section 2 - Card ngang lớn) ---
-                const SizedBox(height: 24), 
+                const SizedBox(height: 16), // Sửa thành 16
+                CategoryList(categories: categories, onCategorySelected: (category) => setState(() => selectedCategory = category)),
+                const SizedBox(height: 16), // Sửa thành 16
+                ProductSection(title: "Bán chạy nhất", products: bestSellers, isHorizontal: true),
+                const SizedBox(height: 16), // Sửa thành 16
                 MustTrySection(products: bestSellers),
-
-                // --- GỢI Ý CHO BẠN (Section 3 - Grid) ---
-                const SizedBox(height: 24),
+                const SizedBox(height: 16), // Sửa thành 16
                 ProductSection(title: "Gợi ý cho bạn", products: recommended),
-
-                // --- SỰ KIỆN (Section 4) ---
-                const SizedBox(height: 24),
+                const SizedBox(height: 16), // Sửa thành 16
                 InfoSection(title: "Sự kiện", items: sampleEvents),
-
-                // --- TIN TỨC (Section 5) ---
-                const SizedBox(height: 16), // Cùng là Info nên để gần hơn (16 thay vì 24)
+                const SizedBox(height: 16), 
                 InfoSection(title: "Tin tức", items: sampleNews),
-
-                // --- CỬA HÀNG (Section 6) ---
-                const SizedBox(height: 24),
+                const SizedBox(height: 16), // Sửa thành 16
                 const NearbyStoreSection(),
               ],
-              
               const SizedBox(height: 100), 
             ],
           ),
@@ -278,22 +226,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildFloatingCart(int cartItemCount) {
     return FloatingActionButton(
-      backgroundColor: AppColors.primaryBright,
+      backgroundColor: AppColors.primary,
       elevation: 4,
       shape: const CircleBorder(),
-      onPressed: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const CartScreen()),
-      ),
+      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CartScreen())),
       child: Stack(
         alignment: Alignment.center,
         clipBehavior: Clip.none,
         children: [
-          const Icon(
-            Icons.shopping_bag_outlined,
-            size: 26,
-            color: Colors.white,
-          ),
+          const Icon(Icons.shopping_bag_outlined, size: 26, color: Colors.white),
           Positioned(
             right: -4,
             top: -6,
@@ -302,23 +243,17 @@ class _HomeScreenState extends State<HomeScreen> {
               tween: Tween(begin: 0.0, end: 1.0),
               duration: const Duration(milliseconds: 500),
               curve: Curves.elasticOut,
-              builder: (context, value, child) =>
-                  Transform.scale(scale: value, child: child),
+              builder: (context, value, child) => Transform.scale(scale: value, child: child),
               child: Container(
                 padding: const EdgeInsets.all(5),
                 decoration: BoxDecoration(
-                  color: AppColors.errorRed,
+                  color: AppColors.error,
                   shape: BoxShape.circle,
                   border: Border.all(color: kPrimaryColor, width: 2),
                 ),
                 child: Text(
                   '$cartItemCount',
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    height: 1,
-                  ),
+                  style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold, height: 1),
                 ),
               ),
             ),
@@ -336,10 +271,7 @@ class _HomeScreenState extends State<HomeScreen> {
           final isLoggedIn = context.read<AuthProvider>().isLoggedIn;
           isLoggedIn
               ? _showDeliveryBottomSheet(context)
-              : Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                );
+              : Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
         },
         borderRadius: BorderRadius.circular(12),
         child: Container(
@@ -347,53 +279,27 @@ class _HomeScreenState extends State<HomeScreen> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 10,
-                offset: const Offset(0, 3),
-              ),
-            ],
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 3))],
           ),
           child: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 250, 243, 236),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.delivery_dining,
-                  color: AppColors.primaryBright,
-                  size: 24,
-                ),
+                decoration: BoxDecoration(color: const Color.fromARGB(255, 250, 243, 236), borderRadius: BorderRadius.circular(10)),
+                child: Icon(Icons.delivery_dining, color: AppColors.primary, size: 24),
               ),
               const SizedBox(width: 14),
               const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      "Giao hàng tận nơi",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
-                    ),
+                    Text("Giao hàng tận nơi", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                     SizedBox(height: 2),
-                    Text(
-                      "Sản phẩm giao đến địa chỉ của bạn",
-                      style: TextStyle(fontSize: 15, color: Colors.black54),
-                    ),
+                    Text("Sản phẩm giao đến địa chỉ của bạn", style: TextStyle(fontSize: 14, color: Colors.black54)),
                   ],
                 ),
               ),
-              const Icon(
-                Icons.arrow_forward_ios,
-                size: 14,
-                color: Colors.black26,
-              ),
+              const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.black26),
             ],
           ),
         ),
@@ -408,26 +314,13 @@ class _HomeScreenState extends State<HomeScreen> {
       isScrollControlled: true,
       builder: (context) => Container(
         padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
+        decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 24),
-            const Text(
-              "Phương thức nhận hàng",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
+            const Text("Phương thức nhận hàng", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 20),
             _buildMethodOption(
               title: "Giao hàng tận nơi",
@@ -435,10 +328,7 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Icons.delivery_dining_outlined,
               onTap: () {
                 Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AddressScreen()),
-                );
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const AddressScreen()));
               },
             ),
             const SizedBox(height: 16),
@@ -448,12 +338,7 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Icons.storefront_outlined,
               onTap: () {
                 Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const StoreSelectionScreen(),
-                  ),
-                );
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const StoreSelectionScreen()));
               },
             ),
           ],
@@ -462,21 +347,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildMethodOption({
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
+  Widget _buildMethodOption({required String title, required String subtitle, required IconData icon, required VoidCallback onTap}) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
-        ),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade200)),
         child: Row(
           children: [
             Icon(icon, color: kPrimaryColor, size: 28),
@@ -485,18 +362,9 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(fontSize: 13, color: Colors.grey),
-                  ),
+                  Text(subtitle, style: const TextStyle(fontSize: 13, color: Colors.grey)),
                 ],
               ),
             ),
