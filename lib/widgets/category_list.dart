@@ -56,7 +56,7 @@ final remoteCategories = widget.categories.where((c) => c.id.toLowerCase() != 'a
               padding: const EdgeInsets.symmetric(horizontal: 20),
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: isSelected ? AppColors.primaryBright.withValues(alpha: 1) : Colors.grey.shade100,
+                color: isSelected ? AppColors.primary.withValues(alpha: 1) : Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(25),
               ),
               child: Text(

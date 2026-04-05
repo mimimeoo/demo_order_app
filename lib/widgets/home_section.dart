@@ -42,7 +42,7 @@ class MustTrySection extends StatelessWidget {
   }
 
   Widget _buildCard(BuildContext context, ProductModel product) {
-    const Color primaryOrange = AppColors.primaryBright;
+    const Color primaryOrange = AppColors.primary;
     const Color bgCard = AppColors.background;
 
     return GestureDetector(

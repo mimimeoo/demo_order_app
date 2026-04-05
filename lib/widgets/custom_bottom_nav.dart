@@ -48,8 +48,8 @@ class CustomBottomNavBar extends StatelessWidget {
   Widget _buildNavItem(int index, IconData activeIcon, IconData inactiveIcon, String label, String? badge) {
     final isSelected = selectedIndex == index;
 
-    final primaryColor = AppColors.primaryBright;
-    final lightColorBg = AppColors.primaryBright.withValues(alpha: 0.05); 
+    final primaryColor = AppColors.primary;
+    final lightColorBg = AppColors.primary.withValues(alpha: 0.05); 
     final inactiveColor = Colors.grey.shade400;
 
     return GestureDetector(

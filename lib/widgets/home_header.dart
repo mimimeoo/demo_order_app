@@ -50,7 +50,7 @@ class HomeHeader extends StatelessWidget {
                           children: [
                             TextSpan(
                               text: "$userName!",
-                              style: const TextStyle(color: AppColors.primaryBright)),
+                              style: const TextStyle(color: AppColors.primary)),
                           ],
                         ),
                       )
@@ -69,7 +69,7 @@ class HomeHeader extends StatelessWidget {
                       "Bạn muốn uống gì hôm nay?",
                       style: TextStyle(
                         fontSize: 14,
-                        color: AppColors.primaryBright,
+                        color: AppColors.primary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
