@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart'; 
 import 'package:firebase_core/firebase_core.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'firebase_options.dart'; 
 import 'theme/app_colors.dart';
@@ -14,14 +15,20 @@ import 'screens/home_screen.dart';
 import 'admin/admin_dashboard_screen.dart'; 
 import 'screens/login_screen.dart';
 import 'screens/user_info_screen.dart'; 
+import 'screens/onboarding_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const AppInit());
+  
+  final prefs = await SharedPreferences.getInstance();
+  final isFirstTime = prefs.getBool('isFirstTime') ?? true;
+  
+  runApp(AppInit(isFirstTime: isFirstTime));
 }
 
 class AppInit extends StatelessWidget {
-  const AppInit({super.key});
+  final bool isFirstTime;
+  const AppInit({super.key, required this.isFirstTime});
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +47,7 @@ class AppInit extends StatelessWidget {
               ChangeNotifierProvider(create: (_) => FavoriteProvider()),
               ChangeNotifierProvider(create: (_) => CartProvider()),
             ],
-            child: const MyApp(), 
+            child: MyApp(isFirstTime: isFirstTime), 
           );
         }
         return const MaterialApp(
@@ -53,7 +60,8 @@ class AppInit extends StatelessWidget {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool isFirstTime;
+  const MyApp({super.key, required this.isFirstTime});
 
   @override
   Widget build(BuildContext context) {
@@ -66,13 +74,14 @@ class MyApp extends StatelessWidget {
         '/setup_profile': (context) => const UserInfoScreen(),
         '/home': (context) => const HomeScreen(),
       },
-      home: const AuthWrapper(),
+      home: AuthWrapper(isFirstTime: isFirstTime),
     );
   }
 }
 
 class AuthWrapper extends StatelessWidget {
-  const AuthWrapper({super.key});
+  final bool isFirstTime;
+  const AuthWrapper({super.key, required this.isFirstTime});
 
   @override
   Widget build(BuildContext context) {
@@ -80,6 +89,11 @@ class AuthWrapper extends StatelessWidget {
 
     // ✅ BỎ ĐOẠN CHECK isLoading Ở ĐÂY ĐỂ TRÁNH LỖI HỦY DIỆT MÀN HÌNH LOGIN KHI GỬI OTP
     
+    // Nếu là lần đầu mở app -> Vào màn hình Onboarding
+    if (isFirstTime) {
+      return const OnboardingScreen();
+    }
+
     // Nếu là Admin -> Vào trang quản trị
     if (authProvider.isLoggedIn && authProvider.isAdmin) {
       return const AdminDashboardScreen();
